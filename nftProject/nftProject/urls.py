@@ -15,7 +15,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.contrib import admin
+from django.urls import path
+from nftInteractionApp.views import TokenAPIViewList
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('tokens/create', admin.site.urls),
+    path('tokens/list', TokenAPIViewList.as_view()),
+    path('tokens/total_supply', admin.site.urls),
 ]
