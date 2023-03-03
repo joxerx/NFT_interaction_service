@@ -11,3 +11,8 @@ class TokenSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return Token.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.tx_hash = validated_data.get('tx_hash', instance.tx_hash)
+        instance.save()
+        return instance
