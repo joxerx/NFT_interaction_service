@@ -17,11 +17,11 @@ from django.contrib import admin
 from django.urls import path
 from django.contrib import admin
 from django.urls import path
-from nftInteractionApp.views import TokenAPIViewList
+from nftInteractionApp.views import TokenAPIViewList, TokenAPIViewTotalSupply, TokenAPIViewCreate
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('tokens/create', admin.site.urls),
+    path('tokens/create', TokenAPIViewCreate.as_view()),
     path('tokens/list', TokenAPIViewList.as_view()),
-    path('tokens/total_supply', admin.site.urls),
+    path('tokens/total_supply', TokenAPIViewTotalSupply.as_view()),
 ]
