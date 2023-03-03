@@ -3,7 +3,7 @@ from web3 import Web3, HTTPProvider
 
 
 def get_config():
-    with open('././config.yml', 'r') as configfile:
+    with open("config.yml", 'r') as configfile:
         return yaml.load(configfile, Loader=yaml.FullLoader)
 
 
