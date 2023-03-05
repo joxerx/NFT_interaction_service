@@ -6,7 +6,7 @@ RUN ls
 
 ADD nftProject /src_nft_app/
 
-ADD config.yml /src_nft_app/nftProject
+ADD config.yml /src_nft_app/
 
 WORKDIR /src_nft_app
 
@@ -18,5 +18,5 @@ VOLUME /src_nft_app
 
 EXPOSE 8080
 
-CMD cd nftProject && ls && python import_fix.py && python manage.py runserver 0.0.0.0:8000
+CMD ls && python import_fix.py && python manage.py runserver 0.0.0.0:8000
 # CMD ["%%CMD%%]
