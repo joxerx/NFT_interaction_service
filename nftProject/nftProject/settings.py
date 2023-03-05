@@ -74,7 +74,7 @@ WSGI_APPLICATION = 'nftProject.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
+# TODO: move database selection to config
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

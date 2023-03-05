@@ -23,6 +23,8 @@ class TokenAPIViewTotalSupply(APIView):
     def get(self, request):
         total_supply = Connection.contract_instance.functions.totalSupply().call()
         return Response({'result': total_supply})
+        # TODO: add connection check and connection retries if failed
+        # TODO: if connection unavailable after 10 retries rise exception
 
 
 class TokenAPIViewCreate(APIView):
