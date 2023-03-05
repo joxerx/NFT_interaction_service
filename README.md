@@ -43,3 +43,10 @@ docker run -d -p 8080:8000 -v src:/src_nft_app --name nft_app nft_service
 
 ### Кстати, tokenURI к первому токену возвращает:
 ![ow57Hgj](https://user-images.githubusercontent.com/29130600/222440671-a523cc04-ab2a-4250-a315-d360ef87777a.jpeg)
+
+#### Примеры запрососов
+![image](https://user-images.githubusercontent.com/29130600/222981546-ba66f8ae-d362-45fd-bf7d-a79908653937.png)
+
+![image](https://user-images.githubusercontent.com/29130600/222981579-22d72975-9842-4bf3-9ba8-223c2512ead7.png)
+
+![image](https://user-images.githubusercontent.com/29130600/222981607-73493551-4dc5-4036-9ed0-fc2367ae6b89.png)
