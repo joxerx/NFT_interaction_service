@@ -30,8 +30,16 @@
   - media_url - урл с произвольным изображением
   - owner - Ethereum-адрес будущего владельца токена
 
-## Конфигурирование сервиса
-`config_template.yml` - шаблон для будущего файла `config.yml`, должен быть в `nftProject/nftInteractionApp`
+## Конфигурирование и запуск
+1. Скачать и распаковать репозиторий. 
+2. Отредактировать `config.yml` с указанием своих параметров
+3. В командной строке последовательно выполнить команды:
+```
+docker build -t nft_service .
 
-## Кстати, tokenURI к первому токену возвращает:
+docker run -d -p 8080:8000 -v src:/src_nft_app --name nft_app nft_service
+```
+4. Сервис будет доступен по адресу `http://localhost:8080/`
+
+### Кстати, tokenURI к первому токену возвращает:
 ![ow57Hgj](https://user-images.githubusercontent.com/29130600/222440671-a523cc04-ab2a-4250-a315-d360ef87777a.jpeg)
