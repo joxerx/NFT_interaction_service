@@ -12,7 +12,7 @@ WORKDIR /src_nft_app
 
 RUN ls .
 
-RUN pip install web3 django djangorestframework pyyaml
+RUN pip install web3 django djangorestframework pyyaml drf-yasg
 
 VOLUME /src_nft_app
 

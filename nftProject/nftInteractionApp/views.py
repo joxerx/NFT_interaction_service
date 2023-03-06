@@ -13,13 +13,15 @@ from .models import Token
 from .connection import Connection
 
 
-class TokenAPIViewList(APIView):
+class TokenListAPIView(APIView):
+    """Show tokens list, saved in database"""
     def get(self, request):
         tokens = Token.objects.all()
         return Response(TokenSerializer(tokens, many=True).data)
 
 
-class TokenAPIViewTotalSupply(APIView):
+class TokenTotalSupplyAPIView(APIView):
+    """Get tokens total supply at blockchain using contract's method"""
     def get(self, request):
         total_supply = Connection.contract_instance.functions.totalSupply().call()
         return Response({'result': total_supply})
@@ -27,7 +29,9 @@ class TokenAPIViewTotalSupply(APIView):
         # TODO: if connection unavailable after 10 retries rise exception
 
 
-class TokenAPIViewCreate(APIView):
+class TokenCreateAPI(APIView):
+    """Allows you to create new NFT token at eth blockchain using Mint method.
+    You should check the owner's address before minting"""
     def post(self, request):
         rand_string = ''.join(random.choice(string.digits + string.ascii_letters) for letter in range(20))
 
