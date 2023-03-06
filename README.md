@@ -6,7 +6,7 @@
 - Database: SQLite
 - Blockchain framework: Web3.py
 - Blockchain: Ethereum (Goerli Testnet)
-- Контейнирезация: Docker
+- Контейнеризация: Docker
 - Документация: Swagger - drf-yasg
 
 ## Реализовано
