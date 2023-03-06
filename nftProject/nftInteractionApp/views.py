@@ -6,6 +6,7 @@ from rest_framework import generics
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 
 from .serializers import TokenSerializer
 from .models import Token
@@ -13,11 +14,18 @@ from .models import Token
 from .connection import Connection
 
 
-class TokenListAPIView(APIView):
+class TokenListAPIPagination(PageNumberPagination):
+    page_size = 200
+    page_size_query_param = 'page_size'
+    max_page_size = 500
+
+
+class TokenListAPIView(generics.ListCreateAPIView):
     """Show tokens list, saved in database"""
-    def get(self, request):
-        tokens = Token.objects.all()
-        return Response(TokenSerializer(tokens, many=True).data)
+    queryset = Token.objects.all()
+    serializer_class = TokenSerializer
+    pagination_class = TokenListAPIPagination
+        #return Response(TokenSerializer(tokens, many=True).data)
 
 
 class TokenTotalSupplyAPIView(APIView):
