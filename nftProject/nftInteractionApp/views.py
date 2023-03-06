@@ -25,7 +25,9 @@ class TokenListAPIView(generics.ListCreateAPIView):
     queryset = Token.objects.all()
     serializer_class = TokenSerializer
     pagination_class = TokenListAPIPagination
+    http_method_names = ['get']
         #return Response(TokenSerializer(tokens, many=True).data)
+
 
 
 class TokenTotalSupplyAPIView(APIView):
