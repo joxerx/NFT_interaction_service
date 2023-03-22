@@ -26,12 +26,12 @@ class TokenListAPIView(generics.ListCreateAPIView):
     serializer_class = TokenSerializer
     pagination_class = TokenListAPIPagination
     http_method_names = ['get']
-        #return Response(TokenSerializer(tokens, many=True).data)
-
+    # return Response(TokenSerializer(tokens, many=True).data)
 
 
 class TokenTotalSupplyAPIView(APIView):
     """Get tokens total supply at blockchain using contract's method"""
+
     def get(self, request):
         total_supply = Connection.contract_instance.functions.totalSupply().call()
         return Response({'result': total_supply})
@@ -42,8 +42,10 @@ class TokenTotalSupplyAPIView(APIView):
 class TokenCreateAPI(APIView):
     """Allows you to create new NFT token at eth blockchain using Mint method.
     You should check the owner's address before minting"""
+
     def post(self, request):
-        rand_string = ''.join(random.choice(string.digits + string.ascii_letters) for letter in range(20))
+        rand_string = ''.join(random.choice(string.digits + string.ascii_letters)
+                              for letter in range(20))
 
         request.data['tx_hash'] = rand_string
         request.data['unique_hash'] = rand_string
@@ -52,10 +54,10 @@ class TokenCreateAPI(APIView):
         serializer.is_valid(raise_exception=True)
 
         txn_hash = Connection.send_transaction(Connection(),
-            owner=request.data['owner'],
-            unique_hash=request.data['unique_hash'],
-            media_url=request.data['media_url']
-        )
+                                               owner=request.data['owner'],
+                                               unique_hash=request.data['unique_hash'],
+                                               media_url=request.data['media_url']
+                                               )
 
         data = {'tx_hash': txn_hash.hex()}
         instance = serializer.save()
