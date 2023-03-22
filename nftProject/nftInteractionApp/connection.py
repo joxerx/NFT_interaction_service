@@ -9,7 +9,9 @@ def get_config():
 
 class Connection:
     config = get_config()
-    w3 = Web3(Web3.HTTPProvider(f'https://goerli.infura.io/v3/{config["infura_key"]}'))
+    # TODO: Refactor me
+    w3 = Web3(Web3.HTTPProvider(config['networks'][0]))
+    network = w3.eth
     contract_instance = w3.eth.contract(address=config['contract_address'], abi=config['abi'])
 
     def send_transaction(self, owner, unique_hash, media_url):
@@ -25,3 +27,6 @@ class Connection:
 
         signed_txn = self.w3.eth.account.sign_transaction(contract_txn, private_key)
         return self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+
+
+connection = Connection()
