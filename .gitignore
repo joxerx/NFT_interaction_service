@@ -1,3 +1,4 @@
 /.env
 /config.yml
 events_*.txt
+/.docker/redis-data/dump.rdb
