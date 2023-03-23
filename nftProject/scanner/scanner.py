@@ -1,9 +1,10 @@
-from web3 import Web3
 import logging
 from nftInteractionApp.connection import connection
 from .utilities import RedisClient
 from nftProject.settings import config
 from time import sleep
+from .serializers import EventSerializer
+
 
 # FIXME: Fix logging
 # TODO: Rewrite
@@ -63,10 +64,30 @@ class Scanner:
             })
             events_list = event_filter.get_all_entries()
             if events_list:
-                logging.info(f'New events:{events_list}')
-                print(f'New events:{events_list}')
+                for event in events_list:
+                    logging.info(f'New event:{str(event)}')
+                    #print(f'New event:{event}')
+                    self.save_event_to_db(event)
+
                 file = open(f'events_{last_checked_block}.txt', 'w')
                 file.write(str(events_list))
             else:
                 logging.info(f'No needed events from {last_checked_block} to {last_network_block}')
             set_last_checked_block(self.event_handler.contract_address, last_network_block)
+
+    def save_event_to_db(self, event: dict):
+        # name, address, blockHash,blockNumber,transactionHash,removed,
+        data = {
+            "name": self.event_name,
+            "address": str(event.address),
+            "blockHash": str(event.blockHash.hex()),
+            "blockNumber": str(event.blockNumber),
+            "transactionHash": str(event.transactionHash.hex()),
+            "removed": str(event.removed)
+        }
+
+        print(data)
+        serializer = EventSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        serializer.save()

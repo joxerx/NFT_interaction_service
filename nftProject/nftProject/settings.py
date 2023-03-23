@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'nftInteractionApp.apps.NftinteractionappConfig',
     'rest_framework',
     'drf_yasg',
-    'scanner',
+    'scanner.apps.ScannerConfig',
 ]
 
 MIDDLEWARE = [
