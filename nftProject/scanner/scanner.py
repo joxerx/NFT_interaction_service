@@ -1,13 +1,13 @@
 import logging
 from nftInteractionApp.connection import connection
+from rest_framework.exceptions import ValidationError
+
 from .utilities import RedisClient
 from nftProject.settings import config
 from time import sleep
 from .serializers import EventSerializer
 
 
-# FIXME: Fix logging
-# TODO: Rewrite
 class EventHandler:
     network: connection.w3
     contract_address: str
@@ -28,7 +28,6 @@ def get_last_checked_block(contract):
 
 def set_last_checked_block(contract, last_block):
     redis = RedisClient()
-    print(f'Setting last checked block: {last_block}')
     redis.connection.set(contract, last_block)
 
 
@@ -45,15 +44,17 @@ class Scanner:
         while True:
             last_network_block = self.event_handler.network.eth.get_block_number()
             logging.info(f'Get last network block: {last_network_block}')
-            print(f'Get last network block: {last_network_block}')
 
             last_checked_block = get_last_checked_block(self.event_handler.contract_address)
             logging.info(f'Get last checked block: {last_checked_block}')
-            print(f'Get last checked block: {last_checked_block}')
+
             if last_checked_block >= last_network_block - 8:
-                print("No new blocks. Waiting")
-                sleep(220)
+                logging.info("No new blocks. Waiting")
+                sleep(120)
                 continue
+
+            # If at this moment got too wide interval blocks to check
+            # need to decrease top border
             if last_network_block - last_checked_block > 9000:
                 last_network_block = last_checked_block + 8990
 
@@ -66,8 +67,6 @@ class Scanner:
             events_list = event_filter.get_all_entries()
             if events_list:
                 for event in events_list:
-                    logging.info(f'New event:{str(event)}')
-                    #print(f'New event:{event}')
                     self.save_event_to_db(event)
 
                 file = open(f'events_{last_checked_block}.txt', 'w')
@@ -87,8 +86,10 @@ class Scanner:
             "removed": str(event.removed)
         }
 
-        print(data)
         serializer = EventSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-
-        serializer.save()
+        try:
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            logging.info(f'New event: {data}')
+        except ValidationError:
+            logging.info(f'Event with txn hash: {event.transactionHash.hex()} already exists!')

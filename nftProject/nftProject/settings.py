@@ -139,18 +139,25 @@ LOGGING = {
         },
     },
     "handlers": {
-        "console": {"class": "logging.StreamHandler", "formatter": "console"},
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "info.log"
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "console"
+        },
     },
     "loggers": {
-        "django": {
+        "": {
             "level": "INFO",
             "handlers": [
-                "console",
+                "console", "file"
             ],
             "propagate": False,
         },
-        "apscheduler.executors.default": {
-            "level": "WARNING",
+        "nftProject.scanner.start_scanner": {
+            "level": "INFO",
             "handlers": [
                 "console",
             ],

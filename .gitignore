@@ -2,3 +2,4 @@
 /config.yml
 events_*.txt
 /.docker/redis-data/dump.rdb
+/info.log

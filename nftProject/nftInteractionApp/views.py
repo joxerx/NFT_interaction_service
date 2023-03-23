@@ -31,7 +31,6 @@ class TokenListAPIView(generics.ListCreateAPIView):
 
 class TokenTotalSupplyAPIView(APIView):
     """Get tokens total supply at blockchain using contract's method"""
-
     def get(self, request):
         retries = 10
         while retries > 0:
