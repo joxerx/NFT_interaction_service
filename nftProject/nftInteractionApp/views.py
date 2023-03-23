@@ -44,6 +44,7 @@ class TokenCreateAPI(APIView):
     You should check the owner's address before minting"""
 
     def post(self, request):
+        print(request.data)
         rand_string = ''.join(random.choice(string.digits + string.ascii_letters)
                               for letter in range(20))
 
