@@ -1,6 +1,6 @@
 import random
 import string
-
+from time import sleep
 from django.shortcuts import render
 from rest_framework import generics
 from django.shortcuts import render
@@ -33,10 +33,16 @@ class TokenTotalSupplyAPIView(APIView):
     """Get tokens total supply at blockchain using contract's method"""
 
     def get(self, request):
-        total_supply = Connection.contract_instance.functions.totalSupply().call()
+        retries = 10
+        while retries > 0:
+            try:
+                total_supply = Connection.contract_instance.functions.totalSupply().call()
+                break
+            except Exception:
+                total_supply = 'Connection error'
+                sleep(3)
+                retries -= 1
         return Response({'result': total_supply})
-        # TODO: add connection check and connection retries if failed
-        # TODO: if connection unavailable after 10 retries rise exception
 
 
 class TokenCreateAPI(APIView):
