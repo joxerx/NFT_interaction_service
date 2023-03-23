@@ -53,6 +53,7 @@ class Scanner:
             if last_checked_block >= last_network_block - 8:
                 print("No new blocks. Waiting")
                 sleep(220)
+                continue
             if last_network_block - last_checked_block > 9000:
                 last_network_block = last_checked_block + 8990
 
