@@ -2,24 +2,11 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-from scanner.scanner import Scanner, EventHandler
-from nftProject.settings import config
-from nftInteractionApp.connection import connection
+
 
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nftProject.settings')
-    # FIXME: Add threading
-    network_connection = connection.w3
-    event_handler = EventHandler(
-        network=network_connection,
-        contract_address=config.contract_address
-    )
-    scanner = Scanner(
-        event_handler=event_handler,
-        event_name=config.event_name
-    )
-    scanner.start_polling()
 
     try:
         from django.core.management import execute_from_command_line
