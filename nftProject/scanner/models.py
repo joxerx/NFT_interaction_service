@@ -7,7 +7,7 @@ class Event(models.Model):
     name = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
     blockHash = models.CharField(max_length=255)
-    blockNumber = models.BigIntegerField(max_length=255)
+    blockNumber = models.BigIntegerField()
     transactionHash = models.CharField(max_length=255, null=False)
     removed = models.BooleanField(default=False)
     logIndex = models.IntegerField()
