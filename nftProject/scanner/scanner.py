@@ -1,6 +1,7 @@
 import logging
+
+from django.db import IntegrityError
 from nftInteractionApp.connection import connection
-from rest_framework.exceptions import ValidationError
 
 from .utilities import RedisClient
 from nftProject.settings import config
@@ -21,7 +22,7 @@ def get_last_checked_block(contract):
     redis = RedisClient()
     last_checked_block = redis.connection.get(contract)
     if last_checked_block is None:
-        last_checked_block = 8500000
+        last_checked_block = 8200000
 
     return int(last_checked_block)
 
@@ -55,8 +56,8 @@ class Scanner:
 
             # If at this moment got too wide interval blocks to check
             # need to decrease top border
-            if last_network_block - last_checked_block > 9000:
-                last_network_block = last_checked_block + 8990
+            if last_network_block - last_checked_block > 1000:
+                last_network_block = last_checked_block + 990
 
             event_filter = self.event_handler.network.eth.filter({
                 "address": config.contract_address,
@@ -68,9 +69,6 @@ class Scanner:
             if events_list:
                 for event in events_list:
                     self.save_event_to_db(event)
-
-                file = open(f'events_{last_checked_block}.txt', 'w')
-                file.write(str(events_list))
             else:
                 logging.info(f'No needed events from {last_checked_block} to {last_network_block}')
             set_last_checked_block(self.event_handler.contract_address, last_network_block)
@@ -81,15 +79,15 @@ class Scanner:
             "name": self.event_name,
             "address": str(event.address),
             "blockHash": str(event.blockHash.hex()),
-            "blockNumber": str(event.blockNumber),
+            "blockNumber": int(event.blockNumber),
             "transactionHash": str(event.transactionHash.hex()),
-            "removed": str(event.removed)
+            "removed": str(event.removed),
+            "logIndex": int(event.logIndex),
         }
-
         serializer = EventSerializer(data=data)
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
             logging.info(f'New event: {data}')
-        except ValidationError:
+        except IntegrityError:
             logging.info(f'Event with txn hash: {event.transactionHash.hex()} already exists!')
