@@ -1,19 +1,25 @@
+import logging
+from typing import List
+
 import yaml
 from web3 import Web3, HTTPProvider
 
-
-def get_config():
-    with open("config.yml", 'r') as configfile:
-        return yaml.load(configfile, Loader=yaml.FullLoader)
+from nftProject.settings import config, Network, Contract
 
 
 class Connection:
-    config = get_config()
-    # TODO: Refactor me
-    w3 = Web3(Web3.HTTPProvider(config['networks'][0]))
-    network = w3.eth
-    contract_instance = w3.eth.contract(address=config['contract_address'], abi=config['abi'])
+    networks: List[Network]
+    # FIXME: Now crushing during ABI initializing
+    def __init__(self, config):
+        self.networks = config.networks
+        for network in config.networks:
+            if network.type == 'ETHEREUM_LIKE':
+                logging.info(f'{network.name} is connected now!')
+                print(network.contracts)
+                for contract in network.contracts:
+                    print(network.instance(contract.name))
 
+    # contract_instance = w3.eth.contract(address=config['contract_address'], abi=config['abi'])
     def send_transaction(self, owner, unique_hash, media_url):
         private_key = self.config['sender_private_key']
         nonce = self.w3.eth.get_transaction_count(f'{self.config["sender_address"]}')
@@ -29,4 +35,4 @@ class Connection:
         return self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
 
-connection = Connection()
+connection = Connection(config)

@@ -1,6 +1,6 @@
 import json
-from pathlib import Path
+import os
 
 
-with Path("contracts", "MintableNFT.json").open() as f:
+with open(os.path.dirname(__file__) + "/MintableNFT.json") as f:
     MINTABLE_NFT = json.load(f)

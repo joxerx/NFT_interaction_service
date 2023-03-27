@@ -12,10 +12,15 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Optional
+
 import dotenv
 import yaml
 from marshmallow_dataclass import class_schema
+from web3 import Web3
+from contracts import (
+    MINTABLE_NFT,
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -34,9 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'nftInteractionApp.apps.NftinteractionappConfig',
+    'scanner.apps.ScannerConfig',
     'rest_framework',
     'drf_yasg',
-    'scanner.apps.ScannerConfig',
 ]
 
 MIDDLEWARE = [
@@ -69,7 +74,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'nftProject.wsgi.application'
 
-
 # Database
 DATABASES = {
     "default": {
@@ -81,7 +85,6 @@ DATABASES = {
         "PORT": os.getenv("POSTGRES_PORT", 5432),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -101,7 +104,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
@@ -112,7 +114,6 @@ TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
@@ -168,9 +169,44 @@ LOGGING = {
 
 SHELL_PLUS = "ptpython"
 
-
 with open(os.path.dirname(__file__) + "/../../config.yml") as f:
     config_data = yaml.safe_load(f)
+
+
+@dataclass
+class Contract:
+    name: str
+    address: str
+    events: List[str]
+
+    @property
+    def abi(self):
+        if self.name == 'MINTABLE_NFT':
+            return MINTABLE_NFT
+
+    def instance(self, w3):
+        return w3.eth.contract(address=self.address, abi=self.abi)
+
+
+@dataclass
+class Network:
+    name: str
+    type: str
+    providers: List[str]
+    contracts: List[Contract]
+    confirmation_gap: int
+    max_filter_length: int
+    sender_address: str
+    sender_private_key: str
+
+    @property
+    def connection_handler(self):
+        return Web3(Web3.HTTPProvider(self.providers))
+
+    def instance(self, contract_name):
+        for contract in self.contracts:
+            if contract.name == contract_name:
+                return contract.instance(self.connection_handler)
 
 
 @dataclass
@@ -179,16 +215,10 @@ class Config:
     DJANGO_SECRET_KEY: str
     DEBUG: bool
 
-    networks: List[str]
-    sender_address: str
-    sender_private_key: str
-    contract_address: str
-    abi: str
-    event_name: str
+    networks: List[Network]
 
 
 config: Config = class_schema(Config)().load(config_data)
-
 
 ALLOWED_HOSTS = config.ALLOWED_HOSTS
 SECRET_KEY = config.DJANGO_SECRET_KEY
