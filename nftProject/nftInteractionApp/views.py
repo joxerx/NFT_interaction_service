@@ -11,7 +11,7 @@ from rest_framework.pagination import PageNumberPagination
 from .serializers import TokenSerializer
 from .models import Token
 
-from .connection import Connection
+from .connection import connection
 
 
 class TokenListAPIPagination(PageNumberPagination):
@@ -33,9 +33,12 @@ class TokenTotalSupplyAPIView(APIView):
     """Get tokens total supply at blockchain using contract's method"""
     def get(self, request):
         retries = 10
+        for network in connection.networks:
+            if network.name == 'Goerli_TESTNET':
+                contract_instance = network.instance('MINTABLE_NFT')
         while retries > 0:
             try:
-                total_supply = Connection.contract_instance.functions.totalSupply().call()
+                total_supply = contract_instance.functions.totalSupply().call()
                 break
             except Exception:
                 total_supply = 'Connection error'
@@ -59,7 +62,8 @@ class TokenCreateAPI(APIView):
         serializer = TokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        txn_hash = Connection.send_transaction(Connection(),
+        txn_hash = connection.send_transaction(network_name='Goerli_TESTNET',
+                                               contract_name='MINTABLE_NFT',
                                                owner=request.data['owner'],
                                                unique_hash=request.data['unique_hash'],
                                                media_url=request.data['media_url']

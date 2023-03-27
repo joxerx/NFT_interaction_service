@@ -201,7 +201,11 @@ class Network:
 
     @property
     def connection_handler(self):
-        return Web3(Web3.HTTPProvider(self.providers))
+        for provider in self.providers:
+            w3 = Web3(Web3.HTTPProvider(provider))
+            if w3.is_connected():
+                return w3
+
 
     def instance(self, contract_name):
         for contract in self.contracts:

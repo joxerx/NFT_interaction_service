@@ -9,30 +9,36 @@ from nftProject.settings import config, Network, Contract
 
 class Connection:
     networks: List[Network]
-    # FIXME: Now crushing during ABI initializing
+
     def __init__(self, config):
         self.networks = config.networks
         for network in config.networks:
             if network.type == 'ETHEREUM_LIKE':
                 logging.info(f'{network.name} is connected now!')
-                print(network.contracts)
-                for contract in network.contracts:
-                    print(network.instance(contract.name))
+                print(network.connection_handler.is_connected())
+                print(network.instance('MINTABLE_NFT').functions.totalSupply().call())
+                print(network.connection_handler)
 
-    # contract_instance = w3.eth.contract(address=config['contract_address'], abi=config['abi'])
-    def send_transaction(self, owner, unique_hash, media_url):
-        private_key = self.config['sender_private_key']
-        nonce = self.w3.eth.get_transaction_count(f'{self.config["sender_address"]}')
-        contract_txn = self.contract_instance.functions.mint(
+    def get_network_object_by_name(self, network_name):
+        for network in self.networks:
+            if network.name == network_name:
+                return network
+
+    def send_transaction(self, network_name, contract_name, owner, unique_hash, media_url):
+        network = self.get_network_object_by_name(network_name)
+        private_key = network.sender_private_key
+        nonce = network.connection_handler.eth.get_transaction_count(network.sender_address)
+        contract_instance = network.instance(contract_name)
+
+        contract_txn = contract_instance.functions.mint(
             owner,
             unique_hash,
             media_url
         ).build_transaction({
             'nonce': nonce,
         })
-
-        signed_txn = self.w3.eth.account.sign_transaction(contract_txn, private_key)
-        return self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        signed_txn = network.connection_handler.eth.account.sign_transaction(contract_txn, private_key)
+        return network.connection_handler.eth.send_raw_transaction(signed_txn.rawTransaction)
 
 
 connection = Connection(config)
