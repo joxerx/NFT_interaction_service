@@ -15,9 +15,6 @@ class Connection:
         for network in config.networks:
             if network.type == 'ETHEREUM_LIKE':
                 logging.info(f'{network.name} is connected now!')
-                print(network.connection_handler.is_connected())
-                print(network.instance('MINTABLE_NFT').functions.totalSupply().call())
-                print(network.connection_handler)
 
     def get_network_object_by_name(self, network_name):
         for network in self.networks:

@@ -1,7 +1,6 @@
 import logging
 
 from django.db import IntegrityError
-from nftInteractionApp.connection import connection
 
 from .utilities import RedisClient
 from nftProject.settings import config
@@ -9,20 +8,11 @@ from time import sleep
 from .serializers import EventSerializer
 
 
-class EventHandler:
-    network: connection.w3
-    contract_address: str
-
-    def __init__(self, network, contract_address):
-        self.network = network
-        self.contract_address = contract_address
-
-
 def get_last_checked_block(contract):
     redis = RedisClient()
     last_checked_block = redis.connection.get(contract)
     if last_checked_block is None:
-        last_checked_block = 8200000
+        last_checked_block = 8500000
 
     return int(last_checked_block)
 
@@ -32,62 +22,57 @@ def set_last_checked_block(contract, last_block):
     redis.connection.set(contract, last_block)
 
 
-class Scanner:
-    def __init__(
-            self,
-            event_handler: EventHandler,
-            event_name: str,
-    ):
-        self.event_handler = event_handler
-        self.event_name = event_name
-
-    def start_polling(self):
-        while True:
-            last_network_block = self.event_handler.network.eth.get_block_number()
+def start_polling():
+    while True:
+        for network in config.networks:
+            last_network_block = network.connection_handler.eth.get_block_number()
             logging.info(f'Get last network block: {last_network_block}')
 
-            last_checked_block = get_last_checked_block(self.event_handler.contract_address)
+            last_checked_block = get_last_checked_block(network.name)
             logging.info(f'Get last checked block: {last_checked_block}')
 
-            if last_checked_block >= last_network_block - 8:
+            if last_checked_block >= last_network_block - network.confirmation_gap:
                 logging.info("No new blocks. Waiting")
                 sleep(120)
                 continue
 
             # If at this moment got too wide interval blocks to check
             # need to decrease top border
-            if last_network_block - last_checked_block > 1000:
-                last_network_block = last_checked_block + 990
+            if last_network_block - last_checked_block > network.max_filter_length:
+                last_network_block = last_checked_block + network.max_filter_length
 
-            event_filter = self.event_handler.network.eth.filter({
-                "address": config.contract_address,
-                "topics": [config.event_name],
-                "fromBlock": last_checked_block,
-                "toBlock": last_network_block,
-            })
-            events_list = event_filter.get_all_entries()
-            if events_list:
-                for event in events_list:
-                    self.save_event_to_db(event)
-            else:
-                logging.info(f'No needed events from {last_checked_block} to {last_network_block}')
-            set_last_checked_block(self.event_handler.contract_address, last_network_block)
+            for contract in network.contracts:
+                for contract_event in contract.events:
+                    event_filter = network.connection_handler.eth.filter({
+                        "address": contract.address,
+                        "topics": [contract_event],
+                        "fromBlock": last_checked_block,
+                        "toBlock": last_network_block,
+                    })
+                    events_list = event_filter.get_all_entries()
+                    if events_list:
+                        for event in events_list:
+                            save_event_to_db(network.name, contract_event, event)
+                    else:
+                        logging.info(f'No needed events from {last_checked_block} to {last_network_block}')
+            set_last_checked_block(network.name, last_network_block)
 
-    def save_event_to_db(self, event: dict):
-        # name, address, blockHash,blockNumber,transactionHash,removed,
-        data = {
-            "name": self.event_name,
-            "address": str(event.address),
-            "blockHash": str(event.blockHash.hex()),
-            "blockNumber": int(event.blockNumber),
-            "transactionHash": str(event.transactionHash.hex()),
-            "removed": str(event.removed),
-            "logIndex": int(event.logIndex),
-        }
-        serializer = EventSerializer(data=data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            logging.info(f'New event: {data}')
-        except IntegrityError:
-            logging.info(f'Event with txn hash: {event.transactionHash.hex()} already exists!')
+
+def save_event_to_db(network, event_name, event: dict):
+    # name, address, blockHash,blockNumber,transactionHash,removed,
+    data = {
+        "name": network + '_' + event_name,
+        "address": str(event.address),
+        "blockHash": str(event.blockHash.hex()),
+        "blockNumber": int(event.blockNumber),
+        "transactionHash": str(event.transactionHash.hex()),
+        "removed": str(event.removed),
+        "logIndex": int(event.logIndex),
+    }
+    serializer = EventSerializer(data=data)
+    try:
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        logging.info(f'New event: {data}')
+    except IntegrityError:
+        logging.info(f'Event with txn hash: {event.transactionHash.hex()} already exists!')
