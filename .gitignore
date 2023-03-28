@@ -4,4 +4,4 @@ events_*.txt
 /.docker/redis-data/dump.rdb
 /info.log
 /nftProject/scanner/migrations/00*
-.idea/NFT_interaction_service.iml
+.idea/
