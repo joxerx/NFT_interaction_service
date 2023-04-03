@@ -1,0 +1,21 @@
+# Settings
+ALLOWED_HOSTS: ["localhost","127.0.0.1"]
+DJANGO_SECRET_KEY: "ngc"
+DEBUG: True
+
+networks:
+    - name: "Goerli_TESTNET"
+      type: "ETHEREUM_LIKE"
+      nodes:
+        - "https://goerli.infura.io/v3/infura_key"
+      contracts:
+        - address: "0xf5de760f2e916647fd766B4AD9E85ff943cE3A2b"
+          events: ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]
+
+        - address: "0xcfcb050e965115a8f7922d617a39ea577bcac2c1"
+          events: ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]
+      confirmation_gap: 8  #  gap before the latest block
+      max_filter_length: 100  # maximum number of blocks on moment scan
+      # If for all contracts at network will be used only one transaction signer
+      sender_address: 'address which used to send transactions'
+      sender_private_key: 'sender key'

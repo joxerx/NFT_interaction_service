@@ -1,0 +1,65 @@
+version: "3"
+
+services:
+  db:
+    # container_name: db
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}" ]
+      interval: 10s
+    image: postgres:14
+    env_file: .env
+    volumes:
+      - ./compose/db:/var/lib/postgresql/data/
+    networks:
+      - nftProject
+
+  web: &web
+    restart: unless-stopped
+    # container_name: web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - .:/code
+    ports:
+      - "127.0.0.1:${DOCKER_EXPOSE_PORT?8000}:${DJANGO_PORT?8000}"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: bash -c "python nftProject/manage.py runserver 0.0.0.0:8000"
+    networks:
+      - nftProject
+  scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: ./.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./:/code/
+    networks:
+      - nftProject
+    command: bash -c "python3 nftProject/manage.py start_scanner"
+
+  redis:
+    image: redis:5.0
+    env_file: .env
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+    volumes:
+      - ./.docker/redis-data:/data
+    networks:
+      - nftProject
+
+networks:
+  nftProject:

@@ -9,26 +9,27 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
-
+import os
+from dataclasses import dataclass
 from pathlib import Path
+from typing import List, Optional
+
+import dotenv
+import yaml
+from marshmallow_dataclass import class_schema
+from web3 import Web3
+from contracts import (
+    MINTABLE_NFT,
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+dotenv.load_dotenv()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-tyda%qaxt8%@ov#u6zn6o2kpl(c+6xmokg+!4ul4g-5q&-#ngc'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'nftInteractionApp.apps.NftinteractionappConfig',
+    'scanner.apps.ScannerConfig',
     'rest_framework',
     'drf_yasg',
 ]
@@ -72,17 +74,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'nftProject.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-# TODO: move database selection to config
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", "nft_service"),
+        "USER": os.getenv("POSTGRES_USER", "nft_service"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "nft_service"),
+        "HOST": os.getenv("POSTGRES_HOST", "postgres"),
+        "PORT": os.getenv("POSTGRES_PORT", 5432),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -102,7 +104,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
@@ -113,7 +114,6 @@ TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
@@ -129,3 +129,101 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 500,
 }
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "console": {
+            "format": "%(asctime)s[%(levelname)s][%(name)s] File '%(pathname)s', line %(lineno)d, in %(funcName)s(): %(message)s",
+            "datefmt": "[%d/%b/%Y %H:%M:%S]",
+        },
+    },
+    "handlers": {
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "info.log"
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "console"
+        },
+    },
+    "loggers": {
+        "": {
+            "level": "INFO",
+            "handlers": [
+                "console", "file"
+            ],
+            "propagate": False,
+        },
+        "nftProject.scanner.start_scanner": {
+            "level": "INFO",
+            "handlers": [
+                "console",
+            ],
+            "propagate": False,
+        },
+    },
+}
+
+SHELL_PLUS = "ptpython"
+
+with open(os.path.dirname(__file__) + "/../../config.yml") as f:
+    config_data = yaml.safe_load(f)
+
+
+@dataclass
+class Contract:
+    name: str
+    address: str
+    events: List[str]
+
+    @property
+    def abi(self):
+        if self.name == 'MINTABLE_NFT':
+            return MINTABLE_NFT
+
+    def instance(self, w3):
+        return w3.eth.contract(address=self.address, abi=self.abi)
+
+
+@dataclass
+class Network:
+    name: str
+    type: str
+    providers: List[str]
+    contracts: List[Contract]
+    confirmation_gap: int
+    max_filter_length: int
+    sender_address: str
+    sender_private_key: str
+
+    @property
+    def connection_handler(self):
+        for provider in self.providers:
+            w3 = Web3(Web3.HTTPProvider(provider))
+            if w3.is_connected():
+                return w3
+
+
+    def instance(self, contract_name):
+        for contract in self.contracts:
+            if contract.name == contract_name:
+                return contract.instance(self.connection_handler)
+
+
+@dataclass
+class Config:
+    ALLOWED_HOSTS: List[str]
+    DJANGO_SECRET_KEY: str
+    DEBUG: bool
+
+    networks: List[Network]
+
+
+config: Config = class_schema(Config)().load(config_data)
+
+ALLOWED_HOSTS = config.ALLOWED_HOSTS
+SECRET_KEY = config.DJANGO_SECRET_KEY
+DEBUG = config.DEBUG
