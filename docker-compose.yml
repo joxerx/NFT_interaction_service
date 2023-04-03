@@ -25,11 +25,11 @@ services:
     volumes:
       - .:/code
     ports:
-      - "${DOCKER_EXPOSE_PORT:-8000}:8000"
+      - "127.0.0.1:${DOCKER_EXPOSE_PORT?8000}:${DJANGO_PORT?8000}"
     depends_on:
       db:
         condition: service_healthy
-    command: bash -c "python3 nftProject/manage.py makemigrations && python3 nftProject/manage.py migrate && python3 nftProject/manage.py runserver 0.0.0.0:8000"
+    command: bash -c "python nftProject/manage.py runserver 0.0.0.0:8000"
     networks:
       - nftProject
   scanner:
